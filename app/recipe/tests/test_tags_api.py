@@ -9,11 +9,12 @@ from core.models import Tag
 
 from recipe.serializers import TagSerializer
 
+
 TAGS_URL = reverse('recipe:tag-list')
 
 
 class PublicTagsApiTests(TestCase):
-    """Test the publicly available tags API"""
+    """Test thje publicly available tags API"""
 
     def setUp(self):
         self.client = APIClient()
@@ -31,7 +32,7 @@ class PrivateTagsApiTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             'test@londonappdev.com',
-            'password'
+            'password123'
         )
         self.client = APIClient()
         self.client.force_authenticate(self.user)
@@ -51,7 +52,7 @@ class PrivateTagsApiTests(TestCase):
     def test_tags_limited_to_user(self):
         """Test that tags returned are for the authenticated user"""
         user2 = get_user_model().objects.create_user(
-            'another@gmail,com',
+            'other@londonappdev.com',
             'testpass'
         )
         Tag.objects.create(user=user2, name='Fruity')
@@ -72,7 +73,6 @@ class PrivateTagsApiTests(TestCase):
             user=self.user,
             name=payload['name']
         ).exists()
-
         self.assertTrue(exists)
 
     def test_create_tag_invalid(self):
