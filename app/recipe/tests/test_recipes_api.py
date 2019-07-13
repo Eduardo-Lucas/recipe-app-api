@@ -130,45 +130,49 @@ class PrivateRecipeApiTests(TestCase):
         for key in payload.keys():
             self.assertEqual(payload[key], getattr(recipe, key))
 
-    def test_create_recipe_with_tags(self):
-        """Test creating recipes with tags"""
+    def test_filter_recipes_by_tags(self):
+        """Test returning recipes with specific tags"""
+        recipe1 = sample_recipe(user=self.user, title='Thai vegetable curry')
+        recipe2 = sample_recipe(user=self.user, title='Aubergine with tahini')
         tag1 = sample_tag(user=self.user, name='Vegan')
-        tag2 = sample_tag(user=self.user, name='Dessert')
+        tag2 = sample_tag(user=self.user, name='Vegetarian')
+        recipe1.tags.add(tag1)
+        recipe2.tags.add(tag2)
+        recipe3 = sample_recipe(user=self.user, title='Fish and chips')
 
-        payload = {
-            'title': 'Avocado lime cheesecake',
-            'tags': [tag1.id, tag2.id],
-            'time_minutes': 60,
-            'price': 20.00
-        }
-        res = self.client.post(RECIPES_URL, payload)
+        res = self.client.get(
+            RECIPES_URL,
+            {'tags': '{},{}'.format(tag1.id, tag2.id)}
+        )
 
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        recipe = Recipe.objects.get(id=res.data['id'])
-        tags = recipe.tags.all()
-        self.assertEqual(tags.count(), 2)
-        self.assertIn(tag1, tags)
-        self.assertIn(tag2, tags)
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
 
-    def test_create_recipe_with_ingredients(self):
-        """Test creating recipe with ingredients"""
-        ingredient1 = sample_ingredient(user=self.user, name='Prawns')
-        ingredient2 = sample_ingredient(user=self.user, name='Ginger')
+    def test_filter_recipes_by_ingredients(self):
+        """Test returning recipes with specific ingredients"""
+        recipe1 = sample_recipe(user=self.user, title='Posh beans on toast')
+        recipe2 = sample_recipe(user=self.user, title='Chicken cacciatore')
+        ingredient1 = sample_ingredient(user=self.user, name='Feta cheese')
+        ingredient2 = sample_ingredient(user=self.user, name='Chicken')
+        recipe1.ingredients.add(ingredient1)
+        recipe2.ingredients.add(ingredient2)
+        recipe3 = sample_recipe(user=self.user, title='Steak and mushrooms')
 
-        payload = {
-            'title': 'Thai prawn red curry',
-            'ingredients': [ingredient1.id, ingredient2.id],
-            'time_minutes': 20,
-            'price': 7.00
-        }
-        res = self.client.post(RECIPES_URL, payload)
+        res = self.client.get(
+            RECIPES_URL,
+            {'ingredients': '{},{}'.format(ingredient1.id, ingredient2.id)}
+        )
 
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        recipe = Recipe.objects.get(id=res.data['id'])
-        ingredients = recipe.ingredients.all()
-        self.assertEqual(ingredients.count(), 2)
-        self.assertIn(ingredient1, ingredients)
-        self.assertIn(ingredient2, ingredients)
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
 
     def test_partial_update_recipe(self):
         """Test updating a recipe with patch"""
